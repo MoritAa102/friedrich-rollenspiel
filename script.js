@@ -1,39 +1,29 @@
 let role = "";
 let sceneIndex = 0;
 let lineIndex = 0;
-let autoPlay = false;
-let autoTimer = null;
-const AUTO_MS = 2500; // Zeit pro Zeile (2.5 Sekunden)
-function startAutoPlay() {
-  if (!isTeacher()) return;
-  autoPlay = true;
-  if (autoTimer) clearInterval(autoTimer);
-  autoTimer = setInterval(() => {
-    if (!atAbsoluteEnd()) nextLine();
-  }, AUTO_MS);
-}
 
-function stopAutoPlay() {
-  autoPlay = false;
-  if (autoTimer) clearInterval(autoTimer);
-  autoTimer = null;
-}
+// ✅ Autoplay: geht weiter, wenn Audio endet (nur Lehrer)
+let autoPlay = true;
 
-// ✅ Szenen: Titel + Bild + Dialogzeilen (Wort für Wort)
+// Zähler für deine Sprecher-Audios (tim1, tim2, ... usw.)
+let countTim = 0;
+let countLea = 0;
+let countLehrer = 0;
+
 const scenes = [
   {
     title: "Szene 1 – Der Beginn",
     image: "images/klasse.jpg",
     lines: [
-      { speaker: "SFX", text: "🔔 Schulglocke: Brrrrring!" },
+      { speaker: "SFX", audio: "sounds/glocke.mp3" },
       { speaker: "Lehrer", text: "So, Kinder. Heute reisen wir zurück ins 18. Jahrhundert. Bitte schaltet eure Gehirne ein." },
-      { speaker: "SFX", text: "📜 Papier raschelt" },
+      { speaker: "SFX", audio: "sounds/papier.mp3" },
       { speaker: "Tim", text: "Herr Lehrer… ist WLAN vorhanden?" },
       { speaker: "Lehrer", text: "Nein, aber Philosophen." },
       { speaker: "Tim", text: "Dann wird’s hart." },
       { speaker: "Lea", text: "Wir sprechen über Friedrich II., oder?" },
       { speaker: "Lehrer", text: "Ganz genau! Auch genannt Friedrich der Große." },
-      { speaker: "SFX", text: "🎼 leise Flötenmusik" },
+      { speaker: "SFX",  audio: "sounds/floete.mp3" },
       { speaker: "Tim", text: "Warum läuft hier Mittelalter-Spotify?" },
       { speaker: "Lehrer", text: "Friedrich spielte Flöte. Sehr gut sogar." },
       { speaker: "Tim", text: "Krieger… und Musiker? Multitasking-King." }
@@ -55,11 +45,9 @@ const scenes = [
     title: "Szene 3 – Reformen & Kartoffeln",
     image: "images/kartoffel.jpg",
     lines: [
-      { speaker: "SFX", text: "🥔 „Plopp“-Sound" },
       { speaker: "Lehrer", text: "Friedrich reformierte Preußen massiv: bessere Verwaltung, weniger Willkür, mehr Schulen, Kartoffeln für alle!" },
       { speaker: "Tim", text: "Moment… ohne Friedrich keine Pommes?" },
       { speaker: "Lea", text: "Keine Pommes. Keine Chips. Keine Ofenkartoffeln." },
-      { speaker: "SFX", text: "😱 dramatischer Sound" },
       { speaker: "Tim", text: "Okay, ich respektiere ihn." },
       { speaker: "Lehrer", text: "Außerdem: Religionsfreiheit, Folter abgeschafft, Beamte nach Leistung, nicht nur Adel." },
       { speaker: "Tim", text: "Also fair… für damalige Verhältnisse." },
@@ -70,12 +58,11 @@ const scenes = [
     title: "Szene 4 – Der Militärkönig",
     image: "images/krieg.jpg",
     lines: [
-      { speaker: "SFX", text: "⚔️ Schlachtlärm" },
+      { speaker: "SFX",  audio: "sounds/krieg.mp3" },
       { speaker: "Lea", text: "Aber er war auch dauernd im Krieg." },
       { speaker: "Lehrer", text: "Ja. Friedrich liebte Ordnung… und Kanonen." },
       { speaker: "Tim", text: "Warum?" },
       { speaker: "Lehrer", text: "Weil Preußen sonst untergegangen wäre. Kleiner Staat, viele Feinde." },
-      { speaker: "SFX", text: "⚔️⚔️ Trommeln" },
       { speaker: "Lehrer", text: "Schlesische Kriege, Siebenjähriger Krieg… Er gewann fast alles – gegen alle Erwartungen." },
       { speaker: "Tim", text: "Also Mathe war schlecht, Krieg war gut?" },
       { speaker: "Lehrer", text: "Sehr verkürzt – aber ja." }
@@ -85,24 +72,23 @@ const scenes = [
     title: "Szene 5 – Die Müller-Arnold-Affäre",
     image: "images/gericht.jpg",
     lines: [
-      { speaker: "SFX", text: "⚖️ Gerichtshammer" },
+      { speaker: "SFX", audio: "sounds/gericht.mp3" },
       { speaker: "Lehrer", text: "Jetzt kommt die berühmte Müller-Arnold-Affäre!" },
       { speaker: "Tim", text: "Endlich Drama." },
       { speaker: "Lea", text: "Ein Müller wurde ungerecht verurteilt, weil ein Adliger ihn verklagt hatte." },
-      { speaker: "Lehrer (theatralisch)", text: "Friedrich greift ein und ruft: „In meinem Staat herrscht GERECHTIGKEIT!“" },
-      { speaker: "SFX", text: "⚖️ Dramatischer Akkord" },
+      { speaker: "Lehrer", text: "Friedrich greift ein und ruft: „In meinem Staat herrscht GERECHTIGKEIT!“" },
       { speaker: "Tim", text: "Ehrenmann!" },
       { speaker: "Lehrer", text: "Ja… aber er mischte sich in die Justiz ein." },
       { speaker: "Lea", text: "Also eigentlich genau das, was er sonst verbieten wollte." },
       { speaker: "Lehrer", text: "Widerspruch detected." },
-      { speaker: "SFX", text: "😤 kleines Drama-Geräusch" }
+      
     ]
   },
   {
     title: "Szene 6 – Toleranz mit Grenzen",
     image: "images/friedrich.jpg",
     lines: [
-      { speaker: "SFX", text: "🎼 ruhige Musik" },
+      { speaker: "SFX",  audio: "sounds/ruhig.mp3" },
       { speaker: "Lehrer", text: "Friedrich war religiös tolerant." },
       { speaker: "Tim", text: "Jeder darf glauben, was er will?" },
       { speaker: "Lehrer", text: "Fast. Christen, Muslime, Juden… theoretisch." },
@@ -116,15 +102,15 @@ const scenes = [
     title: "Szene 7 – Fazit",
     image: "images/fazit.jpg",
     lines: [
-      { speaker: "SFX", text: "🎼 sanfte Musik" },
+      { speaker: "SFX", audio: "sounds/ruhig.mp3" },
       { speaker: "Lehrer", text: "Friedrich II. war: Reformer, Militärstratege, Musiker, Philosoph, Autokrat." },
       { speaker: "Lea", text: "Ein Mensch voller Widersprüche." },
       { speaker: "Tim", text: "Aber ohne ihn kein modernes Preußen." },
       { speaker: "Lehrer", text: "Genau. Er brachte Ordnung, Bildung und Verwaltung – aber Freiheit erst viel später." },
-      { speaker: "SFX", text: "🔔 Schulglocke" },
+      { speaker: "SFX",  audio: "sounds/glocke.mp3" },
       { speaker: "Tim", text: "Also… Test nächste Woche?" },
       { speaker: "Lehrer", text: "Natürlich." },
-      { speaker: "SFX", text: "😱 Schock-Sound" }
+      { speaker: "SFX", audio: "sounds/schock.mp3" }
     ]
   }
 ];
@@ -137,32 +123,79 @@ function isTeacher() {
   return role === "Lehrer";
 }
 
+function atAbsoluteEnd() {
+  return sceneIndex === scenes.length - 1 &&
+    lineIndex === scenes[sceneIndex].lines.length - 1;
+}
+
 function atAbsoluteStart() {
   return sceneIndex === 0 && lineIndex === 0;
 }
 
-function atAbsoluteEnd() {
-  return sceneIndex === scenes.length - 1 &&
-    lineIndex === scenes[sceneIndex].lines.length - 1;
+// Für Zeilen ohne explizites audio: -> automatisch tim1, lehrer1, lea1
+function assignSpeakerAudioIfMissing(line) {
+  if (line.audio) return; // schon vorhanden (SFX etc.)
+
+  if (line.speaker === "Tim") {
+    countTim += 1;
+    line.audio = `sounds/tim${countTim}.mp3`;
+  } else if (line.speaker === "Lea") {
+    countLea += 1;
+    line.audio = `sounds/lea${countLea}.mp3`;
+  } else if (line.speaker.startsWith("Lehrer")) {
+    countLehrer += 1;
+    line.audio = `sounds/lehrer${countLehrer}.mp3`;
+  }
+}
+
+// Audio-Element
+function playLineAudio(line) {
+  const audioEl = $("sceneAudio");
+  if (!audioEl) return;
+
+  audioEl.onended = null;
+  audioEl.pause();
+  audioEl.currentTime = 0;
+
+  if (!line.audio) return;
+
+  audioEl.src = line.audio;
+
+  audioEl.play().catch(() => {
+    // Browser blockiert Autoplay bis ein Klick passiert – dann einmal "Weiter" klicken
+  });
+
+  // ✅ Autoplay: wenn Audio vorbei → nächste Zeile
+  audioEl.onended = () => {
+    if (isTeacher() && autoPlay && !atAbsoluteEnd()) {
+      nextLine();
+    }
+  };
 }
 
 function render() {
   const scene = scenes[sceneIndex];
   const line = scene.lines[lineIndex];
 
+  // Titel + Bild
   $("sceneTitle").innerText = scene.title;
-
-  // ✅ Bild pro Szene
   const img = $("sceneImage");
   img.src = scene.image;
   img.alt = scene.title;
 
+  // Text
   $("dialogSpeaker").innerText = line.speaker;
   $("dialogText").innerText = line.text;
 
   // Buttons
   if ($("prevBtn")) $("prevBtn").disabled = atAbsoluteStart();
   if ($("nextBtn")) $("nextBtn").disabled = atAbsoluteEnd();
+
+  // Audio automatisch zuweisen, falls Sprecher und kein audio angegeben
+  assignSpeakerAudioIfMissing(line);
+
+  // Audio abspielen
+  playLineAudio(line);
 }
 
 function chooseRole(r) {
@@ -172,12 +205,17 @@ function chooseRole(r) {
   $("gameScreen").style.display = "block";
   $("roleText").innerText = "🎭 Deine Rolle: " + role;
 
-  // Nur Lehrer steuert
+  // Nur Lehrer steuert Buttons
   $("controls").style.display = isTeacher() ? "block" : "none";
 
-  // Reset auf Anfang
+  // Reset
   sceneIndex = 0;
   lineIndex = 0;
+
+  // Zähler zurücksetzen (wichtig, damit tim1.. immer gleich bleibt)
+  countTim = 0;
+  countLea = 0;
+  countLehrer = 0;
 
   render();
 }
@@ -210,7 +248,16 @@ function prevLine() {
   render();
 }
 
-// HTML braucht diese Funktionen global
+// Optional: Autoplay an/aus per Taste "A" (nur Lehrer)
+document.addEventListener("keydown", (e) => {
+  if (!isTeacher()) return;
+  if (e.key.toLowerCase() === "a") {
+    autoPlay = !autoPlay;
+    alert("Autoplay: " + (autoPlay ? "AN" : "AUS"));
+  }
+});
+
+// Global für HTML
 window.chooseRole = chooseRole;
 window.nextLine = nextLine;
 window.prevLine = prevLine;
