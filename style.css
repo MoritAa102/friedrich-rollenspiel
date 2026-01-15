@@ -48,3 +48,5 @@ button {
 #prevBtn {
   margin-right: 10px;
 }
+#sceneImage { min-height: 200px; border: 2px solid red; }
+
