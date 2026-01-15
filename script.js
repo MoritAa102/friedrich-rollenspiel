@@ -111,6 +111,7 @@ function render() {
   const line = scene.lines[lineIndex];
 
   document.getElementById("sceneTitle").innerText = scene.title;
+  document.getElementById("sceneImage").src = scene.image;
   document.getElementById("dialogSpeaker").innerText = line.speaker;
   document.getElementById("dialogText").innerText = line.text;
 
