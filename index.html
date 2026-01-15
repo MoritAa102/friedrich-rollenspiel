@@ -20,9 +20,18 @@
   <p id="roleText"></p>
 
   <img id="sceneImage" src="" alt="Szene" width="300">
-  <div id="sceneText">Warte auf Szene...</div>
+ <h2 id="sceneTitle"></h2>
 
-  <button id="nextBtn" onclick="nextScene()">➡️ Nächste Szene</button>
+<div id="dialogBox">
+  <div id="dialogSpeaker"></div>
+  <div id="dialogText">Wähle eine Rolle, dann starte.</div>
+</div>
+
+<div id="controls">
+  <button id="prevBtn" onclick="prevLine()">⬅️ Zurück</button>
+  <button id="nextBtn" onclick="nextLine()">➡️ Weiter</button>
+</div>
+
   <audio id="sceneAudio"></audio>
 </div>
 
