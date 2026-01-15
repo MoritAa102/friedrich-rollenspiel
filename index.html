@@ -2,10 +2,30 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Test</title>
+  <title>Friedrich II – Rollenspiel</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🎭 Friedrich II – Rollenspiel</h1>
-  <p>Wenn du das siehst, funktioniert GitHub Pages 🎉</p>
+
+<h1>🎭 Friedrich II – Rollenspiel</h1>
+
+<div id="startScreen">
+  <p>Wähle deine Rolle:</p>
+  <button onclick="chooseRole('Lehrer')">👨‍🏫 Lehrer</button>
+  <button onclick="chooseRole('Tim')">🧑 Tim</button>
+  <button onclick="chooseRole('Lea')">👩 Lea</button>
+</div>
+
+<div id="gameScreen" style="display:none;">
+  <p id="roleText"></p>
+
+  <img id="sceneImage" src="" alt="Szene" width="300">
+  <div id="sceneText">Warte auf Szene...</div>
+
+  <button id="nextBtn" onclick="nextScene()">➡️ Nächste Szene</button>
+  <audio id="sceneAudio"></audio>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
