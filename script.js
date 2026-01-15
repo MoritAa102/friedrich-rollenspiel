@@ -2,10 +2,11 @@ let role = "";
 let sceneIndex = 0;
 let lineIndex = 0;
 
-// ✅ Dein Skript als Daten (Wort für Wort)
+// ✅ Szenen: Titel + Bild + Dialogzeilen (Wort für Wort)
 const scenes = [
   {
     title: "Szene 1 – Der Beginn",
+    image: "images/klasse.jpg",
     lines: [
       { speaker: "SFX", text: "🔔 Schulglocke: Brrrrring!" },
       { speaker: "Lehrer", text: "So, Kinder. Heute reisen wir zurück ins 18. Jahrhundert. Bitte schaltet eure Gehirne ein." },
@@ -23,6 +24,7 @@ const scenes = [
   },
   {
     title: "Szene 2 – Der aufgeklärte Absolutismus",
+    image: "images/friedrich.jpg",
     lines: [
       { speaker: "Lehrer", text: "Friedrich war ein aufgeklärter Absolutist." },
       { speaker: "Tim", text: "Klingt wie ein Boss-Gegner." },
@@ -34,6 +36,7 @@ const scenes = [
   },
   {
     title: "Szene 3 – Reformen & Kartoffeln",
+    image: "images/kartoffel.jpg",
     lines: [
       { speaker: "SFX", text: "🥔 „Plopp“-Sound" },
       { speaker: "Lehrer", text: "Friedrich reformierte Preußen massiv: bessere Verwaltung, weniger Willkür, mehr Schulen, Kartoffeln für alle!" },
@@ -48,6 +51,7 @@ const scenes = [
   },
   {
     title: "Szene 4 – Der Militärkönig",
+    image: "images/krieg.jpg",
     lines: [
       { speaker: "SFX", text: "⚔️ Schlachtlärm" },
       { speaker: "Lea", text: "Aber er war auch dauernd im Krieg." },
@@ -62,6 +66,7 @@ const scenes = [
   },
   {
     title: "Szene 5 – Die Müller-Arnold-Affäre",
+    image: "images/gericht.jpg",
     lines: [
       { speaker: "SFX", text: "⚖️ Gerichtshammer" },
       { speaker: "Lehrer", text: "Jetzt kommt die berühmte Müller-Arnold-Affäre!" },
@@ -78,6 +83,7 @@ const scenes = [
   },
   {
     title: "Szene 6 – Toleranz mit Grenzen",
+    image: "images/friedrich.jpg",
     lines: [
       { speaker: "SFX", text: "🎼 ruhige Musik" },
       { speaker: "Lehrer", text: "Friedrich war religiös tolerant." },
@@ -91,6 +97,7 @@ const scenes = [
   },
   {
     title: "Szene 7 – Fazit",
+    image: "images/fazit.jpg",
     lines: [
       { speaker: "SFX", text: "🎼 sanfte Musik" },
       { speaker: "Lehrer", text: "Friedrich II. war: Reformer, Militärstratege, Musiker, Philosoph, Autokrat." },
@@ -105,61 +112,76 @@ const scenes = [
   }
 ];
 
-// UI helpers
+function $(id) {
+  return document.getElementById(id);
+}
+
+function isTeacher() {
+  return role === "Lehrer";
+}
+
+function atAbsoluteStart() {
+  return sceneIndex === 0 && lineIndex === 0;
+}
+
+function atAbsoluteEnd() {
+  return sceneIndex === scenes.length - 1 &&
+    lineIndex === scenes[sceneIndex].lines.length - 1;
+}
+
 function render() {
   const scene = scenes[sceneIndex];
   const line = scene.lines[lineIndex];
 
-  document.getElementById("sceneTitle").innerText = scene.title;
-  document.getElementById("sceneImage").src = scene.image;
-  document.getElementById("dialogSpeaker").innerText = line.speaker;
-  document.getElementById("dialogText").innerText = line.text;
+  $("sceneTitle").innerText = scene.title;
 
-  // Buttons aktivieren/deaktivieren
-  document.getElementById("prevBtn").disabled = (sceneIndex === 0 && lineIndex === 0);
+  // ✅ Bild pro Szene
+  const img = $("sceneImage");
+  img.src = scene.image;
+  img.alt = scene.title;
 
-  const atEndOfAll =
-    sceneIndex === scenes.length - 1 &&
-    lineIndex === scenes[sceneIndex].lines.length - 1;
+  $("dialogSpeaker").innerText = line.speaker;
+  $("dialogText").innerText = line.text;
 
-  document.getElementById("nextBtn").disabled = atEndOfAll;
+  // Buttons
+  if ($("prevBtn")) $("prevBtn").disabled = atAbsoluteStart();
+  if ($("nextBtn")) $("nextBtn").disabled = atAbsoluteEnd();
 }
 
-// Rolle wählen (aus index.html Buttons)
 function chooseRole(r) {
   role = r;
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("gameScreen").style.display = "block";
-  document.getElementById("roleText").innerText = "🎭 Deine Rolle: " + role;
 
-  // Nur Lehrer darf steuern
-  if (role !== "Lehrer") {
-    document.getElementById("controls").style.display = "none";
-  } else {
-    document.getElementById("controls").style.display = "block";
-  }
+  $("startScreen").style.display = "none";
+  $("gameScreen").style.display = "block";
+  $("roleText").innerText = "🎭 Deine Rolle: " + role;
 
-  // Start bei erster Zeile
+  // Nur Lehrer steuert
+  $("controls").style.display = isTeacher() ? "block" : "none";
+
+  // Reset auf Anfang
   sceneIndex = 0;
   lineIndex = 0;
+
   render();
 }
 
 function nextLine() {
-  if (role !== "Lehrer") return;
+  if (!isTeacher()) return;
 
   const scene = scenes[sceneIndex];
+
   if (lineIndex < scene.lines.length - 1) {
     lineIndex++;
   } else if (sceneIndex < scenes.length - 1) {
     sceneIndex++;
     lineIndex = 0;
   }
+
   render();
 }
 
 function prevLine() {
-  if (role !== "Lehrer") return;
+  if (!isTeacher()) return;
 
   if (lineIndex > 0) {
     lineIndex--;
@@ -167,10 +189,11 @@ function prevLine() {
     sceneIndex--;
     lineIndex = scenes[sceneIndex].lines.length - 1;
   }
+
   render();
 }
 
-// Damit die Funktionen aus HTML gefunden werden:
+// HTML braucht diese Funktionen global
 window.chooseRole = chooseRole;
 window.nextLine = nextLine;
 window.prevLine = prevLine;
