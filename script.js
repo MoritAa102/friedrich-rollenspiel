@@ -4,6 +4,20 @@ let lineIndex = 0;
 let autoPlay = false;
 let autoTimer = null;
 const AUTO_MS = 2500; // Zeit pro Zeile (2.5 Sekunden)
+function startAutoPlay() {
+  if (!isTeacher()) return;
+  autoPlay = true;
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = setInterval(() => {
+    if (!atAbsoluteEnd()) nextLine();
+  }, AUTO_MS);
+}
+
+function stopAutoPlay() {
+  autoPlay = false;
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+}
 
 // ✅ Szenen: Titel + Bild + Dialogzeilen (Wort für Wort)
 const scenes = [
