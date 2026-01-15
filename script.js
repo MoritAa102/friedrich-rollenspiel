@@ -1,6 +1,9 @@
 let role = "";
 let sceneIndex = 0;
 let lineIndex = 0;
+let autoPlay = false;
+let autoTimer = null;
+const AUTO_MS = 2500; // Zeit pro Zeile (2.5 Sekunden)
 
 // ✅ Szenen: Titel + Bild + Dialogzeilen (Wort für Wort)
 const scenes = [
