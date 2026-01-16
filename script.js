@@ -2,10 +2,13 @@
  * 1) FIREBASE SETUP
  **********************/
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_AUTH_DOMAIN",
-  databaseURL: "DEINE_DATABASE_URL",
-  projectId: "DEIN_PROJECT_ID",
+ apiKey: "AIzaSyAeM3TIPVlrNUjRc7MG1Oh3P6QvauEdIiI",
+  authDomain: "friedrich-ii-onlinegame.firebaseapp.com",
+  databaseURL: "https://friedrich-ii-onlinegame-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "friedrich-ii-onlinegame",
+  storageBucket: "friedrich-ii-onlinegame.firebasestorage.app",
+  messagingSenderId: "427784840958",
+  appId: "1:427784840958:web:72ab5241a25a36215ea7af",
 };
 
 firebase.initializeApp(firebaseConfig);
