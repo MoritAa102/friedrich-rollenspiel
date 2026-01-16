@@ -1,15 +1,32 @@
-let role = "";
-let sceneIndex = 0;
-let lineIndex = 0;
+/**********************
+ * 1) FIREBASE SETUP
+ **********************/
+const firebaseConfig = {
+  apiKey: "DEIN_API_KEY",
+  authDomain: "DEIN_AUTH_DOMAIN",
+  databaseURL: "DEINE_DATABASE_URL",
+  projectId: "DEIN_PROJECT_ID",
+};
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const stateRef = db.ref("game/state");
+
+/**********************
+ * 2) GAME SETUP
+ **********************/
+let role = "";
 let autoPlay = true;
 
-// Sprecher-Zähler
-let countTim = 0;
-let countLea = 0;
-let countLehrer = 0;
+// Nur diese SFX-Dateien nutzt du:
+const SFX = {
+  glocke: "sounds/glocke.mp3",
+  floete: "sounds/floete.mp3",
+  krieg:  "sounds/krieg.mp3",
+  ruhig:  "sounds/ruhig.mp3",
+};
 
-// Szenen + Dialoge
+// Dein Skript (wie bei dir, ohne Text bei SFX)
 const scenes = [
   {
     title: "Szene 1 – Der Beginn",
@@ -55,105 +72,169 @@ const scenes = [
   }
 ];
 
-// Helfer
-function $(id) {
-  return document.getElementById(id);
+// 🔥 Sprecher-Audios automatisch nummerieren (tim1, tim2, ...)
+function precomputeSpeakerAudio() {
+  let t = 0, l = 0, le = 0;
+  for (const scene of scenes) {
+    for (const line of scene.lines) {
+      if (line.sfx) {
+        line.audio = SFX[line.sfx] || "";
+        continue;
+      }
+      if (line.speaker === "Tim") line.audio = `sounds/tim${++t}.mp3`;
+      else if (line.speaker === "Lea") line.audio = `sounds/lea${++l}.mp3`;
+      else if (line.speaker === "Lehrer") line.audio = `sounds/lehrer${++le}.mp3`;
+      else line.audio = "";
+    }
+  }
+}
+precomputeSpeakerAudio();
+
+/**********************
+ * 3) UI HELPERS
+ **********************/
+function $(id) { return document.getElementById(id); }
+function isTeacher() { return role === "Lehrer"; }
+
+function atEnd(state) {
+  const s = scenes[state.sceneIndex];
+  return state.sceneIndex === scenes.length - 1 &&
+    state.lineIndex === s.lines.length - 1;
 }
 
-function isTeacher() {
-  return role === "Lehrer";
+function nextState(state) {
+  const s = scenes[state.sceneIndex];
+  if (state.lineIndex < s.lines.length - 1) {
+    return { sceneIndex: state.sceneIndex, lineIndex: state.lineIndex + 1 };
+  }
+  if (state.sceneIndex < scenes.length - 1) {
+    return { sceneIndex: state.sceneIndex + 1, lineIndex: 0 };
+  }
+  return state; // bleibt am Ende
 }
 
-function atEnd() {
-  return (
-    sceneIndex === scenes.length - 1 &&
-    lineIndex === scenes[sceneIndex].lines.length - 1
-  );
+function prevState(state) {
+  if (state.lineIndex > 0) {
+    return { sceneIndex: state.sceneIndex, lineIndex: state.lineIndex - 1 };
+  }
+  if (state.sceneIndex > 0) {
+    const prevScene = scenes[state.sceneIndex - 1];
+    return { sceneIndex: state.sceneIndex - 1, lineIndex: prevScene.lines.length - 1 };
+  }
+  return state;
 }
 
-// Audio abspielen
-function playAudio(src) {
+/**********************
+ * 4) WOW-EFFEKT: TYPEWRITER
+ **********************/
+let typeTimer = null;
+function typeText(el, text) {
+  if (typeTimer) clearInterval(typeTimer);
+  el.textContent = "";
+  let i = 0;
+  typeTimer = setInterval(() => {
+    el.textContent += text[i] || "";
+    i++;
+    if (i >= text.length) clearInterval(typeTimer);
+  }, 18);
+}
+
+/**********************
+ * 5) AUDIO + AUTOPLAY
+ **********************/
+function playLineAudio(line, onEnd) {
   const audio = $("sceneAudio");
+  audio.onended = null;
   audio.pause();
   audio.currentTime = 0;
-  audio.src = src;
 
-  audio.play().catch(() => {});
-
-  audio.onended = () => {
-    if (autoPlay && isTeacher() && !atEnd()) {
-      nextLine();
-    }
-  };
-}
-
-// Render
-function render() {
-  const scene = scenes[sceneIndex];
-  const line = scene.lines[lineIndex];
-
-  $("sceneTitle").innerText = scene.title;
-  $("sceneImage").src = scene.image;
-
-  // === SOUND EFFECT ===
-  if (line.sfx) {
-    $("dialogSpeaker").innerText = "";
-    $("dialogText").innerText = "";
-
-    playAudio(`sounds/${line.sfx}.mp3`);
+  if (!line.audio) {
+    // Falls mal eine Zeile ohne Audio existiert: nicht blockieren
+    audio.src = "";
+    setTimeout(onEnd, 900);
     return;
   }
 
-  // === SPRECHER ===
-  $("dialogSpeaker").innerText = line.speaker;
-  $("dialogText").innerText = line.text;
+  audio.src = line.audio;
 
-  let audioFile = "";
+  audio.play().catch(() => {
+    // Autoplay-Block: Wenn Ton nicht startet, klickt der Lehrer einmal "Weiter".
+  });
 
-  if (line.speaker === "Tim") {
-    countTim++;
-    audioFile = `sounds/tim${countTim}.mp3`;
-  } else if (line.speaker === "Lea") {
-    countLea++;
-    audioFile = `sounds/lea${countLea}.mp3`;
-  } else if (line.speaker === "Lehrer") {
-    countLehrer++;
-    audioFile = `sounds/lehrer${countLehrer}.mp3`;
-  }
+  audio.onended = onEnd;
 
-  playAudio(audioFile);
+  // Wenn Datei fehlt (404), feuert onerror -> wir gehen trotzdem weiter
+  audio.onerror = () => onEnd();
 }
 
-// Navigation
-function nextLine() {
-  if (!isTeacher()) return;
+/**********************
+ * 6) RENDER AUS STATE
+ **********************/
+function renderFromState(state) {
+  const scene = scenes[state.sceneIndex];
+  const line = scene.lines[state.lineIndex];
 
-  const scene = scenes[sceneIndex];
+  $("sceneTitle").innerText = scene.title;
 
-  if (lineIndex < scene.lines.length - 1) {
-    lineIndex++;
-  } else if (sceneIndex < scenes.length - 1) {
-    sceneIndex++;
-    lineIndex = 0;
+  // Bild Fade
+  const img = $("sceneImage");
+  img.classList.add("fade");
+  setTimeout(() => {
+    img.src = scene.image;
+    img.alt = scene.title;
+    img.classList.remove("fade");
+  }, 180);
+
+  // Dialog "bump"
+  const box = $("dialogBox");
+  box.classList.remove("bump");
+  void box.offsetWidth;
+  box.classList.add("bump");
+
+  // Text / Sprecher
+  if (line.sfx) {
+    $("dialogSpeaker").innerText = "";
+    $("dialogSpeaker").className = "";
+    $("dialogText").innerText = "";
+  } else {
+    $("dialogSpeaker").innerText = line.speaker;
+    $("dialogSpeaker").className = `speaker-${line.speaker}`;
+    typeText($("dialogText"), line.text);
   }
 
-  render();
+  // Buttons nur Lehrer
+  $("controls").style.display = isTeacher() ? "block" : "none";
+  $("toggleAutoBtn").innerText = `⏯ Autoplay: ${autoPlay ? "AN" : "AUS"}`;
+
+  // Audio abspielen (alle hören das), aber nur Lehrer darf weiterschalten
+  playLineAudio(line, () => {
+    if (isTeacher() && autoPlay && !atEnd(state)) {
+      const ns = nextState(state);
+      stateRef.set({ ...ns, ts: Date.now() });
+    }
+  });
 }
 
-function prevLine() {
-  if (!isTeacher()) return;
+/**********************
+ * 7) MULTIPLAYER: STATE LISTENER
+ **********************/
+stateRef.on("value", (snap) => {
+  const state = snap.val();
 
-  if (lineIndex > 0) {
-    lineIndex--;
-  } else if (sceneIndex > 0) {
-    sceneIndex--;
-    lineIndex = scenes[sceneIndex].lines.length - 1;
+  // Wenn noch kein State existiert: Lehrer kann initial setzen,
+  // aber wir setzen hier nichts automatisch.
+  if (!state || typeof state.sceneIndex !== "number") {
+    $("liveStatus").innerText = "🟡 Warte auf Lehrer…";
+    return;
   }
 
-  render();
-}
+  $("liveStatus").innerText = "🟢 Live";
+  renderFromState(state);
+});
 
-// Start
+/**********************
+ * 8) STEUERUNG
+ **********************/
 function chooseRole(r) {
   role = r;
 
@@ -161,18 +242,44 @@ function chooseRole(r) {
   $("gameScreen").style.display = "block";
   $("roleText").innerText = "🎭 Deine Rolle: " + role;
 
-  $("controls").style.display = isTeacher() ? "block" : "none";
-
-  sceneIndex = 0;
-  lineIndex = 0;
-  countTim = 0;
-  countLea = 0;
-  countLehrer = 0;
-
-  render();
+  // Lehrer setzt einmal Initial-State, falls leer
+  if (isTeacher()) {
+    stateRef.get().then((snap) => {
+      if (!snap.exists()) {
+        stateRef.set({ sceneIndex: 0, lineIndex: 0, ts: Date.now() });
+      }
+    });
+  }
 }
 
-// Global
+function nextLine() {
+  if (!isTeacher()) return;
+  stateRef.get().then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const ns = nextState(state);
+    stateRef.set({ ...ns, ts: Date.now() });
+  });
+}
+
+function prevLine() {
+  if (!isTeacher()) return;
+  stateRef.get().then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const ps = prevState(state);
+    stateRef.set({ ...ps, ts: Date.now() });
+  });
+}
+
+function toggleAuto() {
+  if (!isTeacher()) return;
+  autoPlay = !autoPlay;
+  $("toggleAutoBtn").innerText = `⏯ Autoplay: ${autoPlay ? "AN" : "AUS"}`;
+}
+
+// Global fürs HTML
 window.chooseRole = chooseRole;
 window.nextLine = nextLine;
 window.prevLine = prevLine;
+window.toggleAuto = toggleAuto;
