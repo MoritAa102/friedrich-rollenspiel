@@ -286,3 +286,23 @@ window.chooseRole = chooseRole;
 window.nextLine = nextLine;
 window.prevLine = prevLine;
 window.toggleAuto = toggleAuto;
+// ✅ Notfall: chooseRole hinzufügen (falls sie fehlt)
+function chooseRole(r) {
+  role = r;
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+  document.getElementById("roleText").innerText = "🎭 Deine Rolle: " + role;
+
+  // Lehrer sieht Controls
+  const controls = document.getElementById("controls");
+  if (controls) controls.style.display = (role === "Lehrer") ? "block" : "none";
+
+  // Lehrer setzt IMMER einen gültigen Start-State in Firebase
+  if (role === "Lehrer" && typeof stateRef !== "undefined") {
+    stateRef.set({ sceneIndex: 0, lineIndex: 0, ts: Date.now() });
+  }
+}
+
+// ✅ Damit der HTML-Button die Funktion findet
+window.chooseRole = chooseRole;
