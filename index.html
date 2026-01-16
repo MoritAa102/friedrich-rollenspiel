@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Friedrich II – Rollenspiel</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -17,23 +17,32 @@
 </div>
 
 <div id="gameScreen" style="display:none;">
-  <p id="roleText"></p>
+  <div id="topBar">
+    <p id="roleText"></p>
+    <p id="liveStatus">🟢 Verbunden</p>
+  </div>
 
-  <img id="sceneImage" src="" alt="Szene" width="300">
- <h2 id="sceneTitle"></h2>
+  <h2 id="sceneTitle"></h2>
 
-<div id="dialogBox">
-  <div id="dialogSpeaker"></div>
-  <div id="dialogText">Wähle eine Rolle, dann starte.</div>
-</div>
+  <img id="sceneImage" src="" alt="Szene">
 
-<div id="controls">
-  <button id="prevBtn" onclick="prevLine()">⬅️ Zurück</button>
-  <button id="nextBtn" onclick="nextLine()">➡️ Weiter</button>
-</div>
+  <div id="dialogBox">
+    <div id="dialogSpeaker"></div>
+    <div id="dialogText"></div>
+  </div>
+
+  <div id="controls">
+    <button id="prevBtn" onclick="prevLine()">⬅️ Zurück</button>
+    <button id="nextBtn" onclick="nextLine()">➡️ Weiter</button>
+    <button id="toggleAutoBtn" onclick="toggleAuto()">⏯ Autoplay: AN</button>
+  </div>
 
   <audio id="sceneAudio"></audio>
 </div>
+
+<!-- Firebase (compat, damit es super einfach bleibt) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script src="script.js"></script>
 </body>
