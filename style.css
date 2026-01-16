@@ -49,3 +49,39 @@ button {
   margin-right: 10px;
 }
 
+#topBar {
+  display: flex;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+#liveStatus {
+  font-weight: bold;
+}
+
+#sceneImage {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+#sceneImage.fade {
+  opacity: 0;
+}
+
+#dialogBox {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#dialogBox.bump {
+  transform: scale(1.01);
+}
+
+/* Rollenfarben */
+.speaker-Lehrer { color: #1f4b99; }
+.speaker-Tim    { color: #0f7a3a; }
+.speaker-Lea    { color: #7a2ca8; }
+
+/* SFX: nichts anzeigen, aber falls du später willst: */
+.speaker-SFX { color: #555; }
